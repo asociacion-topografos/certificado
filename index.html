@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Certificados QR</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Estilos básicos para el certificado */
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .certificado {
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border: 3px solid #2c3e50;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            margin: 20px auto;
+            position: relative;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+        .header {
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 2px solid #2c3e50;
+            margin-bottom: 20px;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            background-color: #3498db;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .content {
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: center;
+        }
+        .qr-code {
+            position: absolute;
+            bottom: 80px;
+            right: 50px;
+            width: 128px;
+            height: 128px;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+        }
+        .signature {
+            display: inline-block;
+            width: 200px;
+            height: 80px;
+            border-top: 1px solid #2c3e50;
+            margin: 0 20px;
+            vertical-align: top;
+        }
+        .codigo-certificado {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 14px;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+        /* Formulario para generar certificados */
+        .formulario {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .formulario input, .formulario select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .formulario button {
+            background: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        .formulario button:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Formulario para generar certificados -->
+    <div class="formulario">
+        <h2>Generar Certificado</h2>
+        <input type="text" id="nombre" placeholder="Nombre completo del participante">
+        <input type="text" id="rol" placeholder="Rol (ej: Participante, Ponente, etc.)">
+        <input type="text" id="webinar" placeholder="Nombre del webinar">
+        <input type="text" id="fecha" placeholder="Fecha del webinar (ej: 15 de marzo de 2025)">
+        <input type="text" id="codigo" placeholder="Código del certificado (ej: 2025-00001)">
+        <button onclick="generarCertificado()">Generar Certificado</button>
+    </div>
+
+    <!-- Contenedor para mostrar el certificado generado -->
+    <div id="certificado-container"></div>
+
+    <!-- Biblioteca QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        // Función para generar el certificado
+        function generarCertificado() {
+            const nombre = document.getElementById('nombre').value || 'Nombre del Participante';
+            const rol = document.getElementById('rol').value || 'Participante';
+            const webinar = document.getElementById('webinar').value || 'Webinar de Ejemplo';
+            const fecha = document.getElementById('fecha').value || '15 de marzo de 2025';
+            const codigo = document.getElementById('codigo').value || '2025-00001';
+            
+            // Crear URL dinámica para el certificado
+            const certificadoUrl = `${window.location.origin}${window.location.pathname}?cert=${codigo}&nombre=${encodeURIComponent(nombre)}&rol=${encodeURIComponent(rol)}&webinar=${encodeURIComponent(webinar)}&fecha=${encodeURIComponent(fecha)}`;
+            
+            // Generar el certificado HTML
+            const certificadoHTML = `
+                <div class="certificado">
+                    <div class="codigo-certificado">Código: ${codigo}</div>
+                    <div class="header">
+                        <div class="logo">LOGO</div>
+                        <h1 style="color: #2c3e50; margin: 10px 0;">CERTIFICADO</h1>
+                        <h3 style="color: #7f8c8d; margin: 5px 0;">DE PARTICIPACIÓN</h3>
+                    </div>
+
+                    <div class="content">
+                        <p>Se otorga el presente certificado a:</p>
+                        <h2 style="color: #2c3e50; margin: 15px 0;">${nombre}</h2>
+                        <p>En reconocimiento por su participación en calidad de <strong>${rol}</strong></p>
+                        <p>en el webinar:</p>
+                        <p><strong>"${webinar}"</strong></p>
+                        <p>realizado el <strong>${fecha}</strong>.</p>
+                    </div>
+
+                    <div id="qrcode-${codigo}" class="qr-code"></div>
+
+                    <div class="footer">
+                        <div class="signature">
+                            <p>Firma Responsable</p>
+                        </div>
+                        <div class="signature">
+                            <p>Sello Institucional</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin: 20px;">
+                    <button onclick="descargarPDF()" style="background: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Descargar como PDF</button>
+                </div>
+            `;
+            
+            document.getElementById('certificado-container').innerHTML = certificadoHTML;
+            
+            // Generar el código QR
+            setTimeout(() => {
+                new QRCode(document.getElementById(`qrcode-${codigo}`), {
+                    text: certificadoUrl,
+                    width: 128,
+                    height: 128,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }, 100);
+        }
+        
+        // Función para descargar como PDF
+        function descargarPDF() {
+            const { jsPDF } = window.jspdf;
+            const certificado = document.querySelector('.certificado');
+            
+            html2canvas(certificado).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('l', 'mm', [216, 279]); // Tamaño carta landscape
+                const imgWidth = 279;
+                const pageHeight = 216;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+                
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                const codigo = document.getElementById('codigo').value || 'certificado';
+                pdf.save(`certificado-${codigo}.pdf`);
+            });
+        }
+        
+        // Verificar si hay parámetros en la URL (para cuando se escanea el QR)
+        function verificarParametrosURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const cert = urlParams.get('cert');
+            
+            if (cert) {
+                // Mostrar el certificado en modo de visualización
+                const nombre = urlParams.get('nombre') || 'Nombre del Participante';
+                const rol = urlParams.get('rol') || 'Participante';
+                const webinar = urlParams.get('webinar') || 'Webinar de Ejemplo';
+                const fecha = urlParams.get('fecha') || '15 de marzo de 2025';
+                
+                document.querySelector('.formulario').style.display = 'none';
+                
+                const certificadoHTML = `
+                    <div class="certificado">
+                        <div class="codigo-certificado">Código: ${cert}</div>
+                        <div class="header">
+                            <div class="logo">LOGO</div>
+                            <h1 style="color: #2c3e50; margin: 10px 0;">CERTIFICADO</h1>
+                            <h3 style="color: #7f8c8d; margin: 5px 0;">DE PARTICIPACIÓN</h3>
+                        </div>
+
+                        <div class="content">
+                            <p>Se otorga el presente certificado a:</p>
+                            <h2 style="color: #2c3e50; margin: 15px 0;">${nombre}</h2>
+                            <p>En reconocimiento por su participación en calidad de <strong>${rol}</strong></p>
+                            <p>en el webinar:</p>
+                            <p><strong>"${webinar}"</strong></p>
+                            <p>realizado el <strong>${fecha}</strong>.</p>
+                        </div>
+
+                        <div class="footer">
+                            <div class="signature">
+                                <p>Firma Responsable</p>
+                            </div>
+                            <div class="signature">
+                                <p>Sello Institucional</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('certificado-container').innerHTML = certificadoHTML;
+            }
+        }
+        
+        // Ejecutar al cargar la página
+        window.onload = function() {
+            verificarParametrosURL();
+        };
+    </script>
+</body>
+</html>
